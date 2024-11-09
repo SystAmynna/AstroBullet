@@ -39,3 +39,13 @@ dependencies {
 test {
     useJUnitPlatform()
 }
+
+shadowJar {
+    archiveClassifier.set('')
+    archiveFileName.set('app-all.jar')
+    from(sourceSets.main.output)
+    exclude('**/test/**', '**/test/**')
+    manifest {
+        attributes 'Main-Class': 'main.App'
+    }
+}
