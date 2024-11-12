@@ -7,6 +7,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -20,7 +22,7 @@ public class FileManager {
      * Constructeur de la classe
      * NE DOIT PAS ETRE UTILISE
      */
-    public FileManager() {
+    private FileManager() {
         throw new IllegalStateException("FileManager ne doit pas être instancié !");
     }
 
@@ -48,17 +50,22 @@ public class FileManager {
             return tempFile;
         } catch (IOException e) {
             // Erreur lors de la lecture du fichier
-            throw new RuntimeException("Erreur lors de la lecture du fichier", e);
+            throw new IllegalArgumentException("Erreur lors de la lecture du fichier", e);
         }
     }
 
     /**
      * Permet de convertir un fichier en JSON
      * @param file Fichier à convertir
-     * @return Fichier converti en JSON
+     * @return une hashmap contenant les données du fichier
      */
-    public static JSONObject FileToJSON(File file) {
-        return new JSONObject(file);
+    public static Map<String, Object> loadJson(File file) {
+        JSONObject jsonObject = new JSONObject(file);
+        Map<String, Object> map = new HashMap<>();
+        for (String key : jsonObject.keySet()) {
+            map.put(key, jsonObject.get(key));
+        }
+        return map;
     }
 
     /**
@@ -66,13 +73,38 @@ public class FileManager {
      * @param path Chemin du fichier à convertir
      * @return Fichier converti en JSON
      */
-    public static JSONObject FileToJSON(String path) {
-        return new JSONObject(getFile(path));
+    public static Map<String, Object> loadJson(String path) {
+        return loadJson(getFile(path));
     }
 
-    // TODO : Sauvegarder le fichier JSON
-    // TODO : Se renseigner sur un moyen de sauvegarder des fichier au sein de l'archive JAR
+    /**
+     * Permet de convertir un JSON en fichier. Enregistre le fichier au chemin spécifié, et écrase le fichier s'il existe déjà.
+     *
+     * @param jsonObject JSON à convertir en fichier
+     * @param path Chemin du fichier
+     * @return Fichier créé
+     */
+    public static File jsonToFile(JSONObject jsonObject, String path) {
+        // Création du fichier
+        File file = new File(path);
+        try {
+            // Ecriture du fichier avec le contenu JSON
+            Files.write(file.toPath(), jsonObject.toString(4).getBytes());
+        } catch (IOException e) {
+            throw new IllegalArgumentException("Erreur lors de l'écriture du fichier", e);
+        }
+        // Retour du fichier
+        return file;
+    }
 
-
+    /**
+     * Permet de convertir une map en fichier. Enregistre le fichier au chemin spécifié, et écrase le fichier s'il existe déjà.
+     * @param map Map à convertir en fichier
+     * @param path Chemin du fichier
+     * @return Fichier créé
+     */
+    public static File mapToFile(Map<String, Object> map, String path) {
+        return jsonToFile(new JSONObject(map), path);
+    }
 
 }
